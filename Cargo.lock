@@ -2245,6 +2245,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "p001-player"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "parking"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
