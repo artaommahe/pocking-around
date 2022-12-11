@@ -1,5 +1,9 @@
 [workspace]
 
+resolver = "2"
 members = [
   "packages/*"
 ]
+
+[profile.dev.package."*"]
+opt-level = 3
