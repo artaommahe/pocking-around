@@ -1,23 +1,23 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
-const PLAYER_SIZE: Vec3 = Vec3::new(50.0, 50.0, 0.0);
+const PLAYER_SIZE: f32 = 50.0;
 const PLAYER_SPEED: f32 = 500.0;
 
 #[derive(Component)]
 pub struct Player;
 
-pub fn setup_player(mut commands: Commands) {
+pub fn setup_player(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     commands.spawn((
-        SpriteBundle {
-            transform: Transform {
-                translation: Vec3::new(0.0, 0.0, 0.0),
-                scale: PLAYER_SIZE,
-                ..default()
-            },
-            sprite: Sprite {
-                color: Color::rgb(0.43, 0.71, 0.83),
-                ..default()
-            },
+        MaterialMesh2dBundle {
+            mesh: meshes.add(shape::Circle::new(PLAYER_SIZE).into()).into(),
+            material: materials.add(ColorMaterial::from(
+                Color::hex("55cbcd").expect("wrong player color"),
+            )),
+            transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
             ..default()
         },
         Player,
