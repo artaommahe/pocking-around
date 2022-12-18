@@ -85,8 +85,16 @@ impl Wall {
 }
 
 fn setup_wall(mut commands: Commands) {
-    commands.spawn(Wall::new(WallLocation::Top));
-    commands.spawn(Wall::new(WallLocation::Right));
-    commands.spawn(Wall::new(WallLocation::Bottom));
-    commands.spawn(Wall::new(WallLocation::Left));
+    commands
+        .spawn(Wall::new(WallLocation::Top))
+        .insert(Name::new("Wall Top"));
+    commands
+        .spawn(Wall::new(WallLocation::Right))
+        .insert(Name::new("Wall Right"));
+    commands
+        .spawn(Wall::new(WallLocation::Bottom))
+        .insert(Name::new("Wall Bottom"));
+    commands
+        .spawn(Wall::new(WallLocation::Left))
+        .insert(Name::new("Wall Left"));
 }

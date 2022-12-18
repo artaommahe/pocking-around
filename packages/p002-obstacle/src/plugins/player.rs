@@ -23,17 +23,19 @@ fn setup_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn((
-        MaterialMesh2dBundle {
-            mesh: meshes.add(shape::Circle::new(PLAYER_SIZE).into()).into(),
-            material: materials.add(ColorMaterial::from(
-                Color::hex("55cbcd").expect("wrong player color"),
-            )),
-            transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
-            ..default()
-        },
-        Player,
-    ));
+    commands
+        .spawn((
+            MaterialMesh2dBundle {
+                mesh: meshes.add(shape::Circle::new(PLAYER_SIZE).into()).into(),
+                material: materials.add(ColorMaterial::from(
+                    Color::hex("55cbcd").expect("wrong player color"),
+                )),
+                transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
+                ..default()
+            },
+            Player,
+        ))
+        .insert(Name::new("Player"));
 }
 
 fn move_player(
