@@ -25,9 +25,9 @@ pub fn check_collision(
         );
 
         if collision.is_some() {
-            return false;
+            return true;
         }
     }
 
-    true
+    false
 }

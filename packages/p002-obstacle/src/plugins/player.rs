@@ -2,13 +2,23 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use super::collider::{check_collision, Collider, ColliderTarget};
 
+pub struct PlayerPlugin;
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(setup_player)
+            .add_system(move_player)
+            .add_system(follow_camera.after(move_player));
+    }
+}
+
 const PLAYER_SIZE: f32 = 10.0;
 const PLAYER_SPEED: f32 = 500.0;
 
 #[derive(Component)]
 pub struct Player;
 
-pub fn setup_player(
+fn setup_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -26,7 +36,7 @@ pub fn setup_player(
     ));
 }
 
-pub fn move_player(
+fn move_player(
     keyboard_input: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut player: Query<&mut Transform, With<Player>>,
@@ -49,23 +59,34 @@ pub fn move_player(
         new_player_x += PLAYER_SPEED * time.delta_seconds();
     }
 
-    if check_collision(
+    if !check_collision(
         ColliderTarget {
             position: Vec3::new(new_player_x, 0., 0.),
-            size: Vec2::splat(PLAYER_SIZE),
+            size: Vec2::splat(PLAYER_SIZE + PLAYER_SIZE),
         },
         &obstacles,
     ) {
         player_transform.translation.x = new_player_x;
     }
 
-    if check_collision(
+    if !check_collision(
         ColliderTarget {
             position: Vec3::new(0., new_player_y, 0.),
-            size: Vec2::splat(PLAYER_SIZE),
+            size: Vec2::splat(PLAYER_SIZE + PLAYER_SIZE),
         },
         &obstacles,
     ) {
         player_transform.translation.y = new_player_y;
     }
+}
+
+fn follow_camera(
+    player: Query<&Transform, With<Player>>,
+    mut camera: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+) {
+    let player_transform = player.single();
+    let mut camera_transform = camera.single_mut();
+
+    camera_transform.translation.x = player_transform.translation.x;
+    camera_transform.translation.y = player_transform.translation.y;
 }

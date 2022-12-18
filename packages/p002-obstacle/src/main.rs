@@ -1,13 +1,12 @@
 use bevy::prelude::*;
-mod components;
+mod plugins;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugin(plugins::player::PlayerPlugin)
+        .add_plugin(plugins::wall::WallPlugin)
         .add_startup_system(setup)
-        .add_startup_system(components::player::setup_player)
-        .add_startup_system(components::wall::setup_wall)
-        .add_system(components::player::move_player)
         .run();
 }
 

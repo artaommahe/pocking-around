@@ -2,8 +2,16 @@ use bevy::{prelude::*, sprite::SpriteBundle};
 
 use super::collider::Collider;
 
+pub struct WallPlugin;
+
+impl Plugin for WallPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system(setup_wall);
+    }
+}
+
 const WALL_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
-const WALL_THICKNESS: f32 = 10.0;
+const WALL_THICKNESS: f32 = 2.0;
 // x coordinates
 const LEFT_WALL: f32 = -600.;
 const RIGHT_WALL: f32 = 600.;
@@ -76,7 +84,7 @@ impl Wall {
     }
 }
 
-pub fn setup_wall(mut commands: Commands) {
+fn setup_wall(mut commands: Commands) {
     commands.spawn(Wall::new(WallLocation::Top));
     commands.spawn(Wall::new(WallLocation::Right));
     commands.spawn(Wall::new(WallLocation::Bottom));
