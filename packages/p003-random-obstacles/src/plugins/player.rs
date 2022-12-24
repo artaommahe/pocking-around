@@ -6,14 +6,21 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(PlayerPlugin::setup_player)
+        app.add_startup_system(PlayerPlugin::setup)
             .add_system(PlayerPlugin::move_player)
             .add_system(PlayerPlugin::follow_camera.after(PlayerPlugin::move_player));
     }
 }
 
+const PLAYER_SIZE: f32 = 10.0;
+const PLAYER_COLOR: &str = "55cbcd";
+const PLAYER_SPEED: f32 = 500.0;
+
+#[derive(Component)]
+pub struct Player;
+
 impl PlayerPlugin {
-    fn setup_player(
+    fn setup(
         mut commands: Commands,
         mut meshes: ResMut<Assets<Mesh>>,
         mut materials: ResMut<Assets<ColorMaterial>>,
@@ -23,7 +30,7 @@ impl PlayerPlugin {
                 MaterialMesh2dBundle {
                     mesh: meshes.add(shape::Circle::new(PLAYER_SIZE).into()).into(),
                     material: materials.add(ColorMaterial::from(
-                        Color::hex("55cbcd").expect("wrong player color"),
+                        Color::hex(PLAYER_COLOR).expect("wrong player color"),
                     )),
                     transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
                     ..default()
@@ -39,20 +46,24 @@ impl PlayerPlugin {
         mut player: Query<&mut Transform, With<Player>>,
         obstacles: Query<(&Transform, &Collider), Without<Player>>,
     ) {
+        if !keyboard_input.any_pressed([KeyCode::W, KeyCode::S, KeyCode::A, KeyCode::D]) {
+            return;
+        }
+
         let mut player_transform = player.single_mut();
         let mut new_player_x = player_transform.translation.x;
         let mut new_player_y = player_transform.translation.y;
 
-        if keyboard_input.pressed(KeyCode::Up) {
+        if keyboard_input.pressed(KeyCode::W) {
             new_player_y += PLAYER_SPEED * time.delta_seconds();
         }
-        if keyboard_input.pressed(KeyCode::Down) {
+        if keyboard_input.pressed(KeyCode::S) {
             new_player_y -= PLAYER_SPEED * time.delta_seconds();
         }
-        if keyboard_input.pressed(KeyCode::Left) {
+        if keyboard_input.pressed(KeyCode::A) {
             new_player_x -= PLAYER_SPEED * time.delta_seconds();
         }
-        if keyboard_input.pressed(KeyCode::Right) {
+        if keyboard_input.pressed(KeyCode::D) {
             new_player_x += PLAYER_SPEED * time.delta_seconds();
         }
 
@@ -88,9 +99,3 @@ impl PlayerPlugin {
         camera_transform.translation.y = player_transform.translation.y;
     }
 }
-
-const PLAYER_SIZE: f32 = 10.0;
-const PLAYER_SPEED: f32 = 500.0;
-
-#[derive(Component)]
-pub struct Player;
