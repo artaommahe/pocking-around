@@ -15,7 +15,7 @@ cargo new --vcs none packages/p<XXX>-<name>
 #### Run
 
 ```sh
-cargo run -p p000-zero-point
+cargo run -p p<XXX>-<name>
 ```
 
 or
