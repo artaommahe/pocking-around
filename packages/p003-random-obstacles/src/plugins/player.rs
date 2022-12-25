@@ -1,4 +1,7 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::{
+    prelude::*,
+    sprite::{collide_aabb::Collision, MaterialMesh2dBundle},
+};
 
 use super::collider::{check_collision, Collider, ColliderTarget};
 
@@ -12,7 +15,7 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-const PLAYER_SIZE: f32 = 10.0;
+pub const PLAYER_SIZE: f32 = 10.0;
 const PLAYER_COLOR: &str = "55cbcd";
 const PLAYER_SPEED: f32 = 500.0;
 
@@ -67,24 +70,19 @@ impl PlayerPlugin {
             new_player_x += PLAYER_SPEED * time.delta_seconds();
         }
 
-        if !check_collision(
+        let collision = check_collision(
             ColliderTarget {
-                position: Vec3::new(new_player_x, 0., 0.),
+                position: Vec3::new(new_player_x, new_player_y, 0.),
                 size: Vec2::splat(PLAYER_SIZE + PLAYER_SIZE),
             },
             &obstacles,
-        ) {
+        );
+
+        if ![Some(Collision::Left), Some(Collision::Right)].contains(&collision) {
             player_transform.translation.x = new_player_x;
         }
-
-        if !check_collision(
-            ColliderTarget {
-                position: Vec3::new(0., new_player_y, 0.),
-                size: Vec2::splat(PLAYER_SIZE + PLAYER_SIZE),
-            },
-            &obstacles,
-        ) {
-            player_transform.translation.y = new_player_y;
+        if ![Some(Collision::Top), Some(Collision::Bottom)].contains(&collision) {
+            player_transform.translation.y = new_player_y
         }
     }
 

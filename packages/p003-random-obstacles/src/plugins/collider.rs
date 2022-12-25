@@ -1,4 +1,7 @@
-use bevy::{prelude::*, sprite::collide_aabb::collide};
+use bevy::{
+    prelude::*,
+    sprite::collide_aabb::{collide, Collision},
+};
 
 use super::player::Player;
 
@@ -15,7 +18,7 @@ pub struct ColliderTarget {
 pub fn check_collision(
     target: ColliderTarget,
     obstacles: &Query<(&Transform, &Collider), Without<Player>>,
-) -> bool {
+) -> Option<Collision> {
     for (obstacle_transform, obstacle_collider) in obstacles.iter() {
         let collision = collide(
             target.position,
@@ -25,9 +28,9 @@ pub fn check_collision(
         );
 
         if collision.is_some() {
-            return true;
+            return collision;
         }
     }
 
-    false
+    None
 }

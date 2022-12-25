@@ -28,13 +28,13 @@ impl WallPlugin {
 }
 
 const WALL_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
-const WALL_THICKNESS: f32 = 2.0;
+const WALL_THICKNESS: f32 = 20.0;
 // x coordinates
 const LEFT_WALL: f32 = -600.;
 const RIGHT_WALL: f32 = 600.;
 // y coordinates
-const BOTTOM_WALL: f32 = -350.;
-const TOP_WALL: f32 = 350.;
+const BOTTOM_WALL: f32 = -600.;
+const TOP_WALL: f32 = 600.;
 
 enum WallLocation {
     Left,
