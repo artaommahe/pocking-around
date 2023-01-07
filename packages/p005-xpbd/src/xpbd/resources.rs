@@ -10,4 +10,7 @@ impl Default for Gravity {
 }
 
 #[derive(Default, Debug, Resource)]
-pub struct Contacts(pub Vec<(Entity, Entity)>);
+pub struct Contacts(pub Vec<(Entity, Entity, Vec2)>);
+
+#[derive(Default, Debug, Resource)]
+pub struct StaticContacts(pub Vec<(Entity, Entity, Vec2)>);

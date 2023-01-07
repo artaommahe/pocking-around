@@ -6,12 +6,13 @@ pub struct Example1Plugin;
 
 impl Plugin for Example1Plugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(Example1Plugin::setup);
+        app.add_startup_system(Example1Plugin::startup)
+            .insert_resource(xpbd::resources::Gravity(Vec2::ZERO));
     }
 }
 
 impl Example1Plugin {
-    fn setup(
+    fn startup(
         mut commands: Commands,
         mut meshes: ResMut<Assets<Mesh>>,
         mut materials: ResMut<Assets<ColorMaterial>>,
@@ -39,7 +40,5 @@ impl Example1Plugin {
                 Vec2::new(-60., 0.),
             ))
             .insert(xpbd::components::Mass(2.));
-
-        commands.spawn(Camera2dBundle::default());
     }
 }

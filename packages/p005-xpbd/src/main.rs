@@ -7,7 +7,11 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(xpbd::plugin::XpbdPlugin)
-        .add_plugin(examples::example1::Example1Plugin)
-        .insert_resource(xpbd::resources::Gravity(Vec2::ZERO))
+        .add_plugin(examples::example2::Example2Plugin)
+        .add_startup_system(app_startup)
         .run();
+}
+
+fn app_startup(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
 }

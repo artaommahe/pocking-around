@@ -10,3 +10,14 @@ impl Default for CircleCollider {
         Self { radius: 20. }
     }
 }
+
+#[derive(Component, Debug)]
+pub struct BoxCollider {
+    pub size: Vec2,
+}
+
+impl Default for BoxCollider {
+    fn default() -> Self {
+        Self { size: Vec2::ONE }
+    }
+}

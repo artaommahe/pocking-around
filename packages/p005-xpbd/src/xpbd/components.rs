@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use super::{colliders::CircleCollider, consts::DELTA_TIME};
+use super::{
+    colliders::{BoxCollider, CircleCollider},
+    consts::DELTA_TIME,
+};
 
 #[derive(Component, Debug, Default)]
 pub struct Pos(pub Vec2);
@@ -52,4 +55,18 @@ impl ParticleBundle {
             ..default()
         }
     }
+}
+
+#[derive(Bundle, Default)]
+pub struct StaticCircleBundle {
+    pub pos: Pos,
+    pub collider: CircleCollider,
+    pub restitution: Restitution,
+}
+
+#[derive(Bundle, Default)]
+pub struct StaticBoxBundle {
+    pub pos: Pos,
+    pub collider: BoxCollider,
+    pub restitution: Restitution,
 }
