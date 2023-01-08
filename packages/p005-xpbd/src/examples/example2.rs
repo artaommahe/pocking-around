@@ -14,9 +14,9 @@ impl Plugin for Example2Plugin {
             .add_system_set(
                 SystemSet::new()
                     .with_run_criteria(FixedTimestep::step(1. / 10.))
-                    .with_system(spawn_marble),
+                    .with_system(Example2Plugin::spawn_marble),
             )
-            .add_system(despawn_marbles);
+            .add_system(Example2Plugin::despawn_marbles);
     }
 }
 
@@ -57,37 +57,40 @@ impl Example2Plugin {
         commands.insert_resource(Meshes { sphere });
         commands.insert_resource(Materials { blue });
     }
-}
 
-fn spawn_marble(mut commands: Commands, materials: Res<Materials>, meshes: Res<Meshes>) {
-    let radius = 10.;
-    let pos = Vec2::new(
-        (random::<f32>() - 0.5) * 300.,
-        (random::<f32>() - 0.5) * 50.,
-    ) + Vec2::Y * 150.;
-    let vel = Vec2::new((random::<f32>() - 0.5) * 10., random::<f32>() * -500.);
+    fn spawn_marble(mut commands: Commands, materials: Res<Materials>, meshes: Res<Meshes>) {
+        let radius = 10.;
+        let pos = Vec2::new(
+            (random::<f32>() - 0.5) * 300.,
+            (random::<f32>() - 0.5) * 50.,
+        ) + Vec2::Y * 150.;
+        let vel = Vec2::new(
+            (random::<f32>() - 0.5) * 10.,
+            (random::<f32>() + 5.) * -100.,
+        );
 
-    commands
-        .spawn(MaterialMesh2dBundle {
-            mesh: meshes.sphere.clone().into(),
-            material: materials.blue.clone(),
-            transform: Transform {
-                scale: Vec3::splat(radius),
-                translation: pos.extend(0.),
+        commands
+            .spawn(MaterialMesh2dBundle {
+                mesh: meshes.sphere.clone().into(),
+                material: materials.blue.clone(),
+                transform: Transform {
+                    scale: Vec3::splat(radius),
+                    translation: pos.extend(0.),
+                    ..default()
+                },
                 ..default()
-            },
-            ..default()
-        })
-        .insert(ParticleBundle {
-            collider: CircleCollider { radius },
-            ..ParticleBundle::new_with_pos_and_vel(pos, vel)
-        });
-}
+            })
+            .insert(ParticleBundle {
+                collider: CircleCollider { radius },
+                ..ParticleBundle::new_with_pos_and_vel(pos, vel)
+            });
+    }
 
-fn despawn_marbles(mut commands: Commands, query: Query<(Entity, &Pos)>) {
-    for (entity, pos) in query.iter() {
-        if pos.0.y < -800. {
-            commands.entity(entity).despawn();
+    fn despawn_marbles(mut commands: Commands, query: Query<(Entity, &Pos)>) {
+        for (entity, pos) in query.iter() {
+            if pos.0.y < -800. {
+                commands.entity(entity).despawn();
+            }
         }
     }
 }

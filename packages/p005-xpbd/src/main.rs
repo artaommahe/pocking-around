@@ -7,7 +7,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(xpbd::plugin::XpbdPlugin)
-        .add_plugin(examples::example2::Example2Plugin)
+        .add_plugin(examples::example3::Example3Plugin)
         .add_startup_system(app_startup)
         .run();
 }

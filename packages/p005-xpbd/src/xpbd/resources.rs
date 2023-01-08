@@ -14,3 +14,6 @@ pub struct Contacts(pub Vec<(Entity, Entity, Vec2)>);
 
 #[derive(Default, Debug, Resource)]
 pub struct StaticContacts(pub Vec<(Entity, Entity, Vec2)>);
+
+#[derive(Default, Debug, Resource)]
+pub struct CollisionPairs(pub Vec<(Entity, Entity)>);
