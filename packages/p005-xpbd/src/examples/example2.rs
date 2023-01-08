@@ -13,7 +13,7 @@ impl Plugin for Example2Plugin {
         app.add_startup_system(Example2Plugin::startup)
             .add_system_set(
                 SystemSet::new()
-                    .with_run_criteria(FixedTimestep::step(1. / 100.))
+                    .with_run_criteria(FixedTimestep::step(1. / 10.))
                     .with_system(spawn_marble),
             )
             .add_system(despawn_marbles);
@@ -61,8 +61,11 @@ impl Example2Plugin {
 
 fn spawn_marble(mut commands: Commands, materials: Res<Materials>, meshes: Res<Meshes>) {
     let radius = 10.;
-    let pos = Vec2::new(random::<f32>() - 0.5, random::<f32>() - 0.5) * 50. + Vec2::Y * 50.;
-    let vel = Vec2::new(random::<f32>() - 0.5, (random::<f32>() - 0.5) * -50.);
+    let pos = Vec2::new(
+        (random::<f32>() - 0.5) * 300.,
+        (random::<f32>() - 0.5) * 50.,
+    ) + Vec2::Y * 150.;
+    let vel = Vec2::new((random::<f32>() - 0.5) * 10., random::<f32>() * -500.);
 
     commands
         .spawn(MaterialMesh2dBundle {
