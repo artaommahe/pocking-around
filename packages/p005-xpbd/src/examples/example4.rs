@@ -2,21 +2,21 @@ use bevy::{prelude::*, sprite::MaterialMesh2dBundle, time::FixedTimestep};
 use rand::random;
 
 use crate::xpbd::{
-    colliders::{BoxCollider, CircleCollider},
-    components::{ParticleBundle, Pos, StaticBoxBundle},
+    colliders::BoxCollider,
+    components::{DynamicBoxBundle, Pos, StaticBoxBundle},
 };
 
-pub struct Example2Plugin;
+pub struct Example4Plugin;
 
-impl Plugin for Example2Plugin {
+impl Plugin for Example4Plugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(Example2Plugin::startup)
+        app.add_startup_system(Example4Plugin::startup)
             .add_system_set(
                 SystemSet::new()
                     .with_run_criteria(FixedTimestep::step(1. / 10.))
-                    .with_system(Example2Plugin::spawn_marbles),
+                    .with_system(Example4Plugin::spawn_boxes),
             )
-            .add_system(Example2Plugin::despawn_marbles);
+            .add_system(Example4Plugin::despawn_boxes);
     }
 }
 
@@ -27,16 +27,16 @@ struct Materials {
 
 #[derive(Resource)]
 struct Meshes {
-    sphere: Handle<Mesh>,
+    quad: Handle<Mesh>,
 }
 
-impl Example2Plugin {
+impl Example4Plugin {
     fn startup(
         mut commands: Commands,
         mut meshes: ResMut<Assets<Mesh>>,
         mut materials: ResMut<Assets<ColorMaterial>>,
     ) {
-        let sphere = meshes.add(shape::Circle::new(1.).into());
+        let quad = meshes.add(shape::Quad::new(Vec2::ONE).into());
         let blue = materials.add(ColorMaterial::from(Color::MIDNIGHT_BLUE));
 
         let static_size = Vec2::new(1000., 20.);
@@ -54,14 +54,14 @@ impl Example2Plugin {
                 ..default()
             });
 
-        commands.insert_resource(Meshes { sphere });
+        commands.insert_resource(Meshes { quad });
         commands.insert_resource(Materials { blue });
     }
 
-    fn spawn_marbles(mut commands: Commands, materials: Res<Materials>, meshes: Res<Meshes>) {
-        let radius = 10.;
+    fn spawn_boxes(mut commands: Commands, materials: Res<Materials>, meshes: Res<Meshes>) {
+        let size = Vec2::splat(20.);
         let pos = Vec2::new(
-            (random::<f32>() - 0.5) * 300.,
+            (random::<f32>() - 0.5) * 500.,
             (random::<f32>() - 0.5) * 50.,
         ) + Vec2::Y * 150.;
         let vel = Vec2::new(
@@ -71,22 +71,22 @@ impl Example2Plugin {
 
         commands
             .spawn(MaterialMesh2dBundle {
-                mesh: meshes.sphere.clone().into(),
+                mesh: meshes.quad.clone().into(),
                 material: materials.blue.clone(),
                 transform: Transform {
-                    scale: Vec3::splat(radius),
+                    scale: size.extend(1.),
                     translation: pos.extend(0.),
                     ..default()
                 },
                 ..default()
             })
-            .insert(ParticleBundle {
-                collider: CircleCollider { radius },
-                ..ParticleBundle::new_with_pos_and_vel(pos, vel)
+            .insert(DynamicBoxBundle {
+                collider: BoxCollider { size },
+                ..DynamicBoxBundle::new_with_pos_and_vel(pos, vel)
             });
     }
 
-    fn despawn_marbles(mut commands: Commands, query: Query<(Entity, &Pos)>) {
+    fn despawn_boxes(mut commands: Commands, query: Query<(Entity, &Pos)>) {
         for (entity, pos) in query.iter() {
             if pos.0.y > 500. || pos.0.y < -800. || pos.0.x > 1000. || pos.0.x < -1000. {
                 commands.entity(entity).despawn();

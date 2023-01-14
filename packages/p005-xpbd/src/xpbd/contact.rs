@@ -5,6 +5,7 @@ pub struct Contact {
     pub normal: Vec2,
 }
 
+// TODO: add tests
 pub fn ball_ball(pos_a: Vec2, radius_a: f32, pos_b: Vec2, radius_b: f32) -> Option<Contact> {
     let ab = pos_b - pos_a;
     let combined_radius = radius_a + radius_b;
@@ -24,6 +25,7 @@ pub fn ball_ball(pos_a: Vec2, radius_a: f32, pos_b: Vec2, radius_b: f32) -> Opti
     }
 }
 
+// TODO: add tests
 pub fn ball_box(pos_a: Vec2, radius_a: f32, pos_b: Vec2, size_b: Vec2) -> Option<Contact> {
     let box_to_circle = pos_a - pos_b;
     let box_to_circle_abs = box_to_circle.abs();
@@ -61,4 +63,57 @@ pub fn ball_box(pos_a: Vec2, radius_a: f32, pos_b: Vec2, size_b: Vec2) -> Option
         normal,
         penetration,
     })
+}
+
+pub fn box_box(pos_a: Vec2, size_a: Vec2, pos_b: Vec2, size_b: Vec2) -> Option<Contact> {
+    let half_a = size_a / 2.;
+    let half_b = size_b / 2.;
+    let ab = pos_b - pos_a;
+    let overlap = (half_a + half_b) - ab.abs();
+
+    if overlap.x < 0. || overlap.y < 0. {
+        None
+    } else if overlap.x < overlap.y {
+        Some(Contact {
+            penetration: overlap.x,
+            normal: Vec2::X * ab.x.signum(),
+        })
+    } else {
+        Some(Contact {
+            penetration: overlap.y,
+            normal: Vec2::Y * ab.y.signum(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn box_box_clear() {
+        assert!(box_box(Vec2::ZERO, Vec2::ONE, Vec2::new(1.1, 0.), Vec2::ONE).is_none());
+        assert!(box_box(Vec2::ZERO, Vec2::ONE, Vec2::new(-1.1, 0.), Vec2::ONE).is_none());
+        assert!(box_box(Vec2::ZERO, Vec2::ONE, Vec2::new(0., 1.1), Vec2::ONE).is_none());
+        assert!(box_box(Vec2::ZERO, Vec2::ONE, Vec2::new(0., -1.1), Vec2::ONE).is_none());
+    }
+
+    #[test]
+    fn box_box_intersection() {
+        assert!(box_box(Vec2::ZERO, Vec2::ONE, Vec2::ZERO, Vec2::ONE).is_some());
+        assert!(box_box(Vec2::ZERO, Vec2::ONE, Vec2::new(0.9, 0.9), Vec2::ONE).is_some());
+        assert!(box_box(Vec2::ZERO, Vec2::ONE, Vec2::new(-0.9, -0.9), Vec2::ONE).is_some());
+    }
+
+    #[test]
+    fn box_box_contact() {
+        let Contact {
+            normal,
+            penetration,
+        } = box_box(Vec2::ZERO, Vec2::ONE, Vec2::new(0.9, 0.), Vec2::ONE).unwrap();
+
+        assert!(normal.x > 0.);
+        assert!(normal.y < 0.001);
+        assert!((penetration - 0.1).abs() < 0.001);
+    }
 }

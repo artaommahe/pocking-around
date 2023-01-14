@@ -12,7 +12,8 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins)
         .add_plugin(xpbd::plugin::XpbdPlugin)
-        .add_plugin(examples::example3::Example3Plugin)
+        // TOOD: listen for keys pressed to run different examples
+        .add_plugin(examples::example4::Example4Plugin)
         .add_startup_system(app_startup)
         .run();
 }

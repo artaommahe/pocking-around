@@ -35,6 +35,23 @@ impl Default for Restitution {
     }
 }
 
+#[derive(Component, Debug, Default)]
+pub struct Aabb {
+    // bottom-left corner
+    pub min: Vec2,
+    // top-right corner
+    pub max: Vec2,
+}
+
+impl Aabb {
+    pub fn intersects(&self, other: &Self) -> bool {
+        self.max.x >= other.min.x
+            && self.max.y >= other.min.y
+            && self.min.x <= other.max.x
+            && self.min.y <= other.max.y
+    }
+}
+
 #[derive(Bundle, Default)]
 pub struct ParticleBundle {
     pub pos: Pos,
@@ -44,9 +61,33 @@ pub struct ParticleBundle {
     pub mass: Mass,
     pub restitution: Restitution,
     pub collider: CircleCollider,
+    pub aabb: Aabb,
 }
 
 impl ParticleBundle {
+    pub fn new_with_pos_and_vel(pos: Vec2, vel: Vec2) -> Self {
+        Self {
+            pos: Pos(pos),
+            prev_pos: PrevPos(pos - vel * SUB_DT),
+            vel: Vel(vel),
+            ..default()
+        }
+    }
+}
+
+#[derive(Bundle, Default)]
+pub struct DynamicBoxBundle {
+    pub pos: Pos,
+    pub prev_pos: PrevPos,
+    pub vel: Vel,
+    pub pre_solve_vel: PreSolveVel,
+    pub mass: Mass,
+    pub restitution: Restitution,
+    pub collider: BoxCollider,
+    pub aabb: Aabb,
+}
+
+impl DynamicBoxBundle {
     pub fn new_with_pos_and_vel(pos: Vec2, vel: Vec2) -> Self {
         Self {
             pos: Pos(pos),
