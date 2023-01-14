@@ -1,10 +1,15 @@
-use bevy::prelude::*;
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+};
 mod examples;
 mod xpbd;
 
 // https://johanhelsing.studio/posts/bevy_xpbd
 fn main() {
     App::new()
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugins(DefaultPlugins)
         .add_plugin(xpbd::plugin::XpbdPlugin)
         .add_plugin(examples::example3::Example3Plugin)

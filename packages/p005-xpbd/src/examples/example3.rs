@@ -1,8 +1,4 @@
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-    sprite::MaterialMesh2dBundle,
-};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
 use crate::xpbd::{
     colliders::{BoxCollider, CircleCollider},
@@ -13,9 +9,7 @@ pub struct Example3Plugin;
 
 impl Plugin for Example3Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(LogDiagnosticsPlugin::default())
-            .add_plugin(FrameTimeDiagnosticsPlugin::default())
-            .add_startup_system(Example3Plugin::spawn_balls);
+        app.add_startup_system(Example3Plugin::spawn_balls);
     }
 }
 

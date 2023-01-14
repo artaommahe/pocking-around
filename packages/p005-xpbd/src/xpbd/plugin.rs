@@ -4,6 +4,7 @@ use super::{
     colliders::*,
     components::*,
     consts::*,
+    contact::{ball_ball, ball_box, Contact},
     resources::*,
     xpdb_loop::{first_substep, last_substep, run_criteria, XpbdLoop},
 };
@@ -30,6 +31,7 @@ impl Plugin for XpbdPlugin {
                 CoreStage::Update,
                 FixedUpdateStage,
                 SystemStage::parallel()
+                    // TODO: use https://github.com/IyesGames/iyes_loopless instead
                     .with_run_criteria(run_criteria)
                     .with_system(
                         XpbdPlugin::collect_collision_pairs.with_run_criteria(first_substep),
@@ -62,6 +64,7 @@ impl Plugin for XpbdPlugin {
 }
 
 impl XpbdPlugin {
+    // TODO: optimize with hash grids
     fn collect_collision_pairs(
         query: Query<(Entity, &Pos, &Vel, &CircleCollider)>,
         mut collision_pairs: ResMut<CollisionPairs>,
@@ -114,26 +117,27 @@ impl XpbdPlugin {
     fn solve_pos(
         mut query: Query<(&mut Pos, &CircleCollider, &Mass)>,
         collision_pairs: Res<CollisionPairs>,
+        mut contacts: ResMut<Contacts>,
     ) {
         for (entity_a, entity_b) in collision_pairs.0.iter().cloned() {
             let [(mut pos_a, circle_a, mass_a), (mut pos_b, circle_b, mass_b)] =
                 query.get_many_mut([entity_a, entity_b]).unwrap();
 
-            let ab = pos_b.0 - pos_a.0;
-            let combined_radius = circle_a.radius + circle_b.radius;
-            let ab_sqr_len = ab.length_squared();
+            if let Some(Contact {
+                penetration,
+                normal,
+            }) = ball_ball(pos_a.0, circle_a.radius, pos_b.0, circle_b.radius)
+            {
+                constrain_body_positions(
+                    &mut pos_a,
+                    &mut pos_b,
+                    mass_a,
+                    mass_b,
+                    normal,
+                    penetration,
+                );
 
-            if ab_sqr_len < combined_radius * combined_radius {
-                let ab_length = ab_sqr_len.sqrt();
-                let penetracion_depth = combined_radius - ab.length();
-                let n = ab / ab_length;
-
-                let w_a = 1. / mass_a.0;
-                let w_b = 1. / mass_b.0;
-                let w_sum = w_a + w_b;
-
-                pos_a.0 -= n * penetracion_depth * w_a / w_sum;
-                pos_b.0 += n * penetracion_depth * w_b / w_sum;
+                contacts.0.push((entity_a, entity_b, normal));
             }
         }
     }
@@ -145,18 +149,14 @@ impl XpbdPlugin {
     ) {
         for (entity_a, mut pos_a, circle_a) in dynamics.iter_mut() {
             for (entity_b, pos_b, circle_b) in statics.iter() {
-                let ab = pos_b.0 - pos_a.0;
-                let combined_radius = circle_a.radius + circle_b.radius;
-                let ab_sqr_len = ab.length_squared();
+                if let Some(Contact {
+                    penetration,
+                    normal,
+                }) = ball_ball(pos_a.0, circle_a.radius, pos_b.0, circle_b.radius)
+                {
+                    constrain_body_position(&mut pos_a, normal, penetration);
 
-                if ab_sqr_len < combined_radius * combined_radius {
-                    let ab_length = ab_sqr_len.sqrt();
-                    let penetration_depth = combined_radius - ab_length;
-                    let n = ab / ab_length;
-
-                    pos_a.0 -= n * penetration_depth;
-
-                    contacts.0.push((entity_a, entity_b, n));
+                    contacts.0.push((entity_a, entity_b, normal));
                 }
             }
         }
@@ -169,41 +169,15 @@ impl XpbdPlugin {
     ) {
         for (entity_a, mut pos_a, circle_a) in dynamics.iter_mut() {
             for (entity_b, pos_b, box_b) in statics.iter() {
-                let box_to_circle = pos_a.0 - pos_b.0;
-                let box_to_circle_abs = box_to_circle.abs();
-                let half_extends = box_b.size / 2.;
-                let corner_to_center = box_to_circle_abs - half_extends;
-                let r = circle_a.radius;
+                if let Some(Contact {
+                    normal,
+                    penetration,
+                }) = ball_box(pos_a.0, circle_a.radius, pos_b.0, box_b.size)
+                {
+                    constrain_body_position(&mut pos_a, normal, penetration);
 
-                if corner_to_center.x > r || corner_to_center.y > r {
-                    continue;
+                    contacts.0.push((entity_a, entity_b, normal));
                 }
-
-                let s = box_to_circle.signum();
-
-                let (n, penetration_depth) = if corner_to_center.x > 0. && corner_to_center.y > 0. {
-                    // corner case
-                    let corner_to_center_sqr = corner_to_center.length_squared();
-
-                    if corner_to_center_sqr > r * r {
-                        continue;
-                    }
-
-                    let cornder_dist = corner_to_center_sqr.sqrt();
-                    let penetration_depth = r - cornder_dist;
-                    let n = corner_to_center / cornder_dist * -s;
-
-                    (n, penetration_depth)
-                } else if corner_to_center.x > corner_to_center.y {
-                    // closer to vertical edge
-                    (Vec2::X * -s.x, -corner_to_center.x + r)
-                } else {
-                    (Vec2::Y * -s.y, -corner_to_center.y + r)
-                };
-
-                pos_a.0 -= n * penetration_depth;
-
-                contacts.0.push((entity_a, entity_b, n));
             }
         }
     }
@@ -260,4 +234,25 @@ impl XpbdPlugin {
             transform.translation = pos.0.extend(0.);
         }
     }
+}
+
+fn constrain_body_positions(
+    pos_a: &mut Pos,
+    pos_b: &mut Pos,
+    mass_a: &Mass,
+    mass_b: &Mass,
+    n: Vec2,
+    penetration_depth: f32,
+) {
+    let w_a = 1. / mass_a.0;
+    let w_b = 1. / mass_b.0;
+    let w_sum = w_a + w_b;
+    let pos_impulse = n * (-penetration_depth / w_sum);
+
+    pos_a.0 += pos_impulse * w_a;
+    pos_b.0 -= pos_impulse * w_b;
+}
+
+fn constrain_body_position(pos: &mut Pos, normal: Vec2, penetration_depth: f32) {
+    pos.0 -= normal * penetration_depth;
 }
