@@ -1,9 +1,24 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
-
-use crate::xpbd::{
-    colliders::{BoxCollider, CircleCollider},
-    components::{ParticleBundle, Pos, StaticBoxBundle},
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    sprite::MaterialMesh2dBundle,
 };
+use xpbd::{colliders::*, components::*, XpbdPlugin};
+
+fn main() {
+    App::new()
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(DefaultPlugins)
+        .add_plugin(XpbdPlugin)
+        .add_plugin(Example3Plugin)
+        .add_startup_system(app_startup)
+        .run();
+}
+
+fn app_startup(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
+}
 
 pub struct Example3Plugin;
 

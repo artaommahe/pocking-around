@@ -8,8 +8,16 @@ Pocking around with `rust` and `bevy`.
 
 #### Add
 
+package
+
 ```sh
 cargo new --vcs none packages/p<XXX>-<name>
+```
+
+library
+
+```sh
+cargo new --vcs none --lib libs/<name>
 ```
 
 #### Run

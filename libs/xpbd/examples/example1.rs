@@ -1,6 +1,24 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    sprite::MaterialMesh2dBundle,
+};
+use xpbd::XpbdPlugin;
 
-use crate::xpbd;
+fn main() {
+    App::new()
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(DefaultPlugins)
+        .add_plugin(XpbdPlugin)
+        .add_plugin(Example1Plugin)
+        .add_startup_system(app_startup)
+        .run();
+}
+
+fn app_startup(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
+}
 
 pub struct Example1Plugin;
 

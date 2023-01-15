@@ -1,4 +1,3 @@
-// TODO: remove `pub` for private parts
 pub mod colliders;
 pub mod components;
 pub mod consts;

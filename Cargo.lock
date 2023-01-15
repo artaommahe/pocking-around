@@ -2588,15 +2588,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "p005-xpbd"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy-inspector-egui",
- "rand",
-]
-
-[[package]]
 name = "parking"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3825,3 +3816,11 @@ name = "xi-unicode"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
+
+[[package]]
+name = "xpbd"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "rand",
+]
