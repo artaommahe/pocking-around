@@ -25,7 +25,7 @@ impl Plugin for PlayerPlugin {
 pub const PLAYER_SIZE: f32 = 10.0;
 const PLAYER_COLOR: &str = "55cbcd";
 const PLAYER_SPEED: f32 = 500.0;
-const MOUSE_DIRECTION_DOT_SIZE: f32 = 4.0;
+const MOUSE_DIRECTION_DOT_SIZE: f32 = 3.0;
 const MOUSE_DIRECTION_DOT_COLOR: &str = "d4f0f0";
 // initial player direction is to the north, so we have to adjust any rotation by it
 const MOUSE_DIRECTION_NORMALIZATION: f32 = PI / 2.0;
@@ -136,8 +136,8 @@ impl PlayerPlugin {
 
         let mut player_transform = player_query.single_mut();
 
-        let diff = cursor_position.unwrap() - player_transform.translation.truncate();
-        // no
+        let player_position = player_transform.translation.truncate();
+        let diff = cursor_position.unwrap() - player_position;
         let angle = diff.y.atan2(diff.x) - MOUSE_DIRECTION_NORMALIZATION;
 
         player_transform.rotation = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);

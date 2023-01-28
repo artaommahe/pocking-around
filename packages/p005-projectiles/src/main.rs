@@ -9,5 +9,6 @@ fn main() {
         .add_plugin(plugins::player::PlayerPlugin)
         .add_plugin(plugins::wall::WallPlugin)
         .add_plugin(plugins::random_obstacles::RandomObstaclesPlugin)
+        .add_plugin(plugins::projectile::WeaponPlugin)
         .run();
 }
