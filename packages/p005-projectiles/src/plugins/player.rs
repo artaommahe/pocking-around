@@ -24,7 +24,7 @@ impl Plugin for PlayerPlugin {
 
 pub const PLAYER_SIZE: f32 = 10.0;
 const PLAYER_COLOR: &str = "55cbcd";
-const PLAYER_SPEED: f32 = 500.0;
+const PLAYER_SPEED: f32 = 300.0;
 const MOUSE_DIRECTION_DOT_SIZE: f32 = 3.0;
 const MOUSE_DIRECTION_DOT_COLOR: &str = "d4f0f0";
 // initial player direction is to the north, so we have to adjust any rotation by it

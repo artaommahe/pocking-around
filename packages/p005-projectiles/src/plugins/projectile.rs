@@ -6,35 +6,61 @@ pub struct WeaponPlugin;
 
 impl Plugin for WeaponPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(WeaponPlugin::fire_bullet);
+        app.add_system(WeaponPlugin::fire_bullet)
+            .add_system(WeaponPlugin::projectile_movement)
+            .add_system(WeaponPlugin::projectile_cleanup);
     }
 }
+
+const MAX_TRAVEL_DISTANCE: f32 = 350.;
 
 impl WeaponPlugin {
     fn fire_bullet(
         mut commands: Commands,
         mouse_input: Res<Input<MouseButton>>,
         keyboard_input: Res<Input<KeyCode>>,
-        player_query: Query<(&Transform), With<Player>>,
+        player_query: Query<&Transform, With<Player>>,
     ) {
         if mouse_input.just_pressed(MouseButton::Left)
             || keyboard_input.just_pressed(KeyCode::Space)
         {
-            let (player_transform) = player_query.single();
+            let player_transform = player_query.single();
 
-            println!("{:?}", player_transform);
             commands.spawn(Bullet::from_player_position(player_transform));
+        }
+    }
+
+    fn projectile_movement(
+        mut projectiles: Query<(&mut Transform, &mut Projectile)>,
+        time: Res<Time>,
+    ) {
+        for (mut transform, mut projectile) in projectiles.iter_mut() {
+            let direction = transform.rotation.mul_vec3(Vec3::Y);
+            let traveled_distance = projectile.speed * time.delta_seconds();
+
+            transform.translation += direction * traveled_distance;
+            projectile.traveled += traveled_distance;
+        }
+    }
+
+    fn projectile_cleanup(mut commands: Commands, projectiles: Query<(Entity, &Projectile)>) {
+        for (entity, projectile) in projectiles.iter() {
+            if projectile.traveled > MAX_TRAVEL_DISTANCE {
+                commands.entity(entity).despawn();
+            }
         }
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Projectile {
     speed: f32,
+    traveled: f32,
 }
 
 const BULLET_SIZE: Vec2 = Vec2::new(2., 10.);
 const BULLET_COLOR: &str = "ffc48c";
+const BULLET_SPEED: f32 = 750.;
 
 #[derive(Bundle)]
 struct Bullet {
@@ -63,7 +89,10 @@ impl Bullet {
                 },
                 ..default()
             },
-            projectile: Projectile { speed: 50. },
+            projectile: Projectile {
+                speed: BULLET_SPEED,
+                traveled: 0.,
+            },
         }
     }
 }
