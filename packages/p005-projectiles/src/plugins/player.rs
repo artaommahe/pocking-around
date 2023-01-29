@@ -101,7 +101,7 @@ impl PlayerPlugin {
                 position: Vec3::new(new_player_x, new_player_y, 0.),
                 size: Vec2::splat(PLAYER_SIZE + PLAYER_SIZE),
             },
-            &obstacles,
+            &obstacles.into_iter().collect(),
         );
 
         if ![Some(Collision::Left), Some(Collision::Right)].contains(&collision) {

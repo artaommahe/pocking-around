@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use super::player::Player;
+use super::{
+    collider::{check_collision, Collider, ColliderTarget},
+    player::Player,
+};
 
 pub struct WeaponPlugin;
 
@@ -8,11 +11,12 @@ impl Plugin for WeaponPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(WeaponPlugin::fire_bullet)
             .add_system(WeaponPlugin::projectile_movement)
-            .add_system(WeaponPlugin::projectile_cleanup);
+            .add_system(WeaponPlugin::projectile_cleanup)
+            .add_system(WeaponPlugin::projectile_collision);
     }
 }
 
-const MAX_TRAVEL_DISTANCE: f32 = 350.;
+const MAX_TRAVEL_DISTANCE: f32 = 450.;
 
 impl WeaponPlugin {
     fn fire_bullet(
@@ -26,7 +30,9 @@ impl WeaponPlugin {
         {
             let player_transform = player_query.single();
 
-            commands.spawn(Bullet::from_player_position(player_transform));
+            commands
+                .spawn(Bullet::from_player_position(player_transform))
+                .insert(Name::new("Bullet"));
         }
     }
 
@@ -50,15 +56,39 @@ impl WeaponPlugin {
             }
         }
     }
+
+    fn projectile_collision(
+        mut commands: Commands,
+        projectiles: Query<(Entity, &Projectile, &Transform)>,
+        collider_targets: Query<(&Transform, &Collider)>,
+    ) {
+        let collider_targets_vec = collider_targets.into_iter().collect();
+
+        for (entity, projectile, transform) in projectiles.iter() {
+            let projectile_front_position = transform.translation
+                + transform.rotation.mul_vec3(projectile.size.extend(1.) / 2.);
+
+            if let Some(_) = check_collision(
+                ColliderTarget {
+                    position: projectile_front_position,
+                    size: Vec2::splat(1.),
+                },
+                &collider_targets_vec,
+            ) {
+                commands.entity(entity).despawn();
+            }
+        }
+    }
 }
 
 #[derive(Component, Debug)]
 struct Projectile {
     speed: f32,
     traveled: f32,
+    size: Vec2,
 }
 
-const BULLET_SIZE: Vec2 = Vec2::new(2., 10.);
+const BULLET_SIZE: Vec2 = Vec2::new(2., 15.);
 const BULLET_COLOR: &str = "ffc48c";
 const BULLET_SPEED: f32 = 750.;
 
@@ -92,6 +122,7 @@ impl Bullet {
             projectile: Projectile {
                 speed: BULLET_SPEED,
                 traveled: 0.,
+                size: BULLET_SIZE,
             },
         }
     }
