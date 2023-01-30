@@ -3,12 +3,15 @@ use std::f32::consts::PI;
 use bevy::{
     prelude::*,
     render::camera::RenderTarget,
-    sprite::{collide_aabb::Collision, MaterialMesh2dBundle},
+    sprite::{
+        collide_aabb::{collide, Collision},
+        MaterialMesh2dBundle,
+    },
 };
 
 use super::{
     camera::MainCamera,
-    collider::{check_collision, Collider, ColliderTarget},
+    collider::{Collider, ColliderTarget},
 };
 
 pub struct PlayerPlugin;
@@ -96,13 +99,25 @@ impl PlayerPlugin {
             new_player_x += PLAYER_SPEED * time.delta_seconds();
         }
 
-        let collision = check_collision(
-            ColliderTarget {
-                position: Vec3::new(new_player_x, new_player_y, 0.),
-                size: Vec2::splat(PLAYER_SIZE + PLAYER_SIZE),
-            },
-            &obstacles.into_iter().collect(),
-        );
+        let target = ColliderTarget {
+            position: Vec3::new(new_player_x, new_player_y, 0.),
+            size: Vec2::splat(PLAYER_SIZE * 2.),
+        };
+        let mut collision: Option<Collision> = None;
+
+        for (obstacle_transform, obstacle_collider) in obstacles.into_iter() {
+            let obstacle_collision = collide(
+                target.position,
+                target.size,
+                obstacle_transform.translation,
+                obstacle_collider.size,
+            );
+
+            if obstacle_collision.is_some() {
+                collision = obstacle_collision;
+                break;
+            }
+        }
 
         if ![Some(Collision::Left), Some(Collision::Right)].contains(&collision) {
             player_transform.translation.x = new_player_x;

@@ -1,10 +1,11 @@
 use std::time::Duration;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::collide_aabb::collide};
 
 use super::{
-    collider::{check_collision, Collider, ColliderTarget},
+    collider::{Collider, ColliderTarget},
     player::Player,
+    status::Health,
 };
 
 pub struct WeaponPlugin;
@@ -14,10 +15,12 @@ impl Plugin for WeaponPlugin {
         app.insert_resource(LastFiredProjectile {
             time: Duration::ZERO,
         })
+        .init_resource::<CollidedProjectiles>()
         .add_system(WeaponPlugin::fire_bullet)
         .add_system(WeaponPlugin::projectile_movement)
-        .add_system(WeaponPlugin::projectile_cleanup)
-        .add_system(WeaponPlugin::projectile_collision);
+        .add_system(WeaponPlugin::projectile_collision.after(WeaponPlugin::projectile_movement))
+        .add_system(WeaponPlugin::projectile_damage.after(WeaponPlugin::projectile_collision))
+        .add_system(WeaponPlugin::projectile_cleanup.after(WeaponPlugin::projectile_damage));
     }
 }
 
@@ -59,35 +62,87 @@ impl WeaponPlugin {
         }
     }
 
-    fn projectile_cleanup(mut commands: Commands, projectiles: Query<(Entity, &Projectile)>) {
+    fn projectile_collision(
+        projectiles: Query<(Entity, &Projectile, &Transform)>,
+        collider_targets: Query<(Entity, &Transform, &Collider)>,
+        mut collided_projectiles: ResMut<CollidedProjectiles>,
+    ) {
+        for (entity, projectile, transform) in projectiles.iter() {
+            let projectile_front_position = transform.translation
+                + transform.rotation.mul_vec3(projectile.size.extend(1.) / 2.);
+
+            let target = ColliderTarget {
+                position: projectile_front_position,
+                size: Vec2::splat(1.),
+            };
+
+            for (obstacle_entity, obstacle_transform, obstacle_collider) in
+                collider_targets.into_iter()
+            {
+                let obstacle_collision = collide(
+                    target.position,
+                    target.size,
+                    obstacle_transform.translation,
+                    obstacle_collider.size,
+                );
+
+                if obstacle_collision.is_some() {
+                    collided_projectiles.0.push(ProjectileCollision {
+                        collided_entity: obstacle_entity,
+                        projectile_entity: entity,
+                        projectile_damage: projectile.damage,
+                    });
+
+                    break;
+                }
+            }
+        }
+    }
+
+    fn projectile_damage(
+        mut commands: Commands,
+        collided_projectiles: Res<CollidedProjectiles>,
+        mut collided_targets: Query<&mut Health>,
+    ) {
+        for ProjectileCollision {
+            collided_entity,
+            projectile_damage,
+            ..
+        } in collided_projectiles.0.iter().cloned()
+        {
+            if projectile_damage <= 0. {
+                continue;
+            }
+
+            if let Ok(mut target_health) = collided_targets.get_mut(collided_entity) {
+                target_health.current -= projectile_damage.max(0.);
+
+                if target_health.current <= 0. {
+                    commands.entity(collided_entity).despawn();
+                }
+            }
+        }
+    }
+
+    fn projectile_cleanup(
+        mut commands: Commands,
+        projectiles: Query<(Entity, &Projectile)>,
+        mut collided_projectiles: ResMut<CollidedProjectiles>,
+    ) {
         for (entity, projectile) in projectiles.iter() {
             if projectile.traveled > MAX_TRAVEL_DISTANCE {
                 commands.entity(entity).despawn();
             }
         }
-    }
 
-    fn projectile_collision(
-        mut commands: Commands,
-        projectiles: Query<(Entity, &Projectile, &Transform)>,
-        collider_targets: Query<(&Transform, &Collider)>,
-    ) {
-        let collider_targets_vec = collider_targets.into_iter().collect();
-
-        for (entity, projectile, transform) in projectiles.iter() {
-            let projectile_front_position = transform.translation
-                + transform.rotation.mul_vec3(projectile.size.extend(1.) / 2.);
-
-            if let Some(_) = check_collision(
-                ColliderTarget {
-                    position: projectile_front_position,
-                    size: Vec2::splat(1.),
-                },
-                &collider_targets_vec,
-            ) {
-                commands.entity(entity).despawn();
-            }
+        for ProjectileCollision {
+            projectile_entity, ..
+        } in collided_projectiles.0.iter().cloned()
+        {
+            commands.entity(projectile_entity).despawn();
         }
+
+        collided_projectiles.0.clear();
     }
 }
 
@@ -96,16 +151,29 @@ struct Projectile {
     speed: f32,
     traveled: f32,
     size: Vec2,
+    damage: f32,
 }
 
 #[derive(Resource, Debug)]
 struct LastFiredProjectile {
+    // TODO: rewrite with Some(Timer)
     time: Duration,
 }
+
+#[derive(Debug, Clone)]
+struct ProjectileCollision {
+    collided_entity: Entity,
+    projectile_entity: Entity,
+    projectile_damage: f32,
+}
+
+#[derive(Resource, Default, Debug)]
+struct CollidedProjectiles(pub Vec<ProjectileCollision>);
 
 const BULLET_SIZE: Vec2 = Vec2::new(2., 15.);
 const BULLET_COLOR: &str = "ffc48c";
 const BULLET_SPEED: f32 = 750.;
+const BULLET_DAMAGE: f32 = 20.;
 
 #[derive(Bundle)]
 struct Bullet {
@@ -138,6 +206,7 @@ impl Bullet {
                 speed: BULLET_SPEED,
                 traveled: 0.,
                 size: BULLET_SIZE,
+                damage: BULLET_DAMAGE,
             },
         }
     }

@@ -3,7 +3,7 @@ use std::ops::Add;
 use bevy::{prelude::*, sprite::collide_aabb::collide};
 use rand::{thread_rng, Rng};
 
-use super::{collider::Collider, player::PLAYER_SIZE};
+use super::{collider::Collider, player::PLAYER_SIZE, status::Health};
 
 pub struct RandomObstaclesPlugin;
 
@@ -33,6 +33,7 @@ const OBSTACLE_SIZE: Vec2 = Vec2::splat(20.0);
 struct Obstacle {
     sprite: SpriteBundle,
     collider: Collider,
+    health: Health,
 }
 
 fn get_obstacle(position: &Vec2) -> Obstacle {
@@ -55,6 +56,7 @@ fn get_obstacle(position: &Vec2) -> Obstacle {
         collider: Collider {
             size: transform.scale.truncate(),
         },
+        health: Health::from_value(100.),
     }
 }
 
