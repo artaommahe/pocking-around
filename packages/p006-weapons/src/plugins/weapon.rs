@@ -12,12 +12,13 @@ impl Plugin for WeaponPlugin {
             weapon: Weapon::Pistol(PistolWeapon::new()),
             fire_throttle: Timer::new(Duration::from_millis(0), TimerMode::Once),
         })
-        .add_system(WeaponPlugin::fire_bullet);
+        .add_system(WeaponPlugin::fire)
+        .add_system(WeaponPlugin::change_weapon);
     }
 }
 
 impl WeaponPlugin {
-    fn fire_bullet(
+    fn fire(
         commands: Commands,
         mouse_input: Res<Input<MouseButton>>,
         keyboard_input: Res<Input<KeyCode>>,
@@ -61,6 +62,33 @@ impl WeaponPlugin {
             }
 
             current_weapon.fire_throttle.reset();
+        }
+    }
+
+    fn change_weapon(
+        keyboard_input: Res<Input<KeyCode>>,
+        mut current_weapon: ResMut<CurrentWeapon>,
+    ) {
+        let mut new_weapon: Option<Weapon> = None;
+
+        if keyboard_input.just_pressed(KeyCode::Key1)
+            && !matches!(current_weapon.weapon, Weapon::Pistol(_))
+        {
+            new_weapon = Some(Weapon::Pistol(PistolWeapon::new()));
+        }
+        if keyboard_input.just_pressed(KeyCode::Key2)
+            && !matches!(current_weapon.weapon, Weapon::Shotgun(_))
+        {
+            new_weapon = Some(Weapon::Shotgun(ShotgunWeapon::new()));
+        }
+        if keyboard_input.just_pressed(KeyCode::Key3)
+            && !matches!(current_weapon.weapon, Weapon::Rifle(_))
+        {
+            new_weapon = Some(Weapon::Rifle(RifleWeapon::new()));
+        }
+
+        if new_weapon.is_some() {
+            current_weapon.weapon = new_weapon.unwrap();
         }
     }
 }
