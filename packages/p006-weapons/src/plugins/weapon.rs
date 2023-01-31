@@ -9,7 +9,7 @@ pub struct WeaponPlugin;
 impl Plugin for WeaponPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(LastFiredProjectile {
-            time: Duration::ZERO,
+            timer: Timer::new(Duration::from_millis(BULLETS_THROTTLE), TimerMode::Once),
         })
         .add_system(WeaponPlugin::fire_bullet);
     }
@@ -24,8 +24,10 @@ impl WeaponPlugin {
         time: Res<Time>,
         mut last_fired_projectile: ResMut<LastFiredProjectile>,
     ) {
+        last_fired_projectile.timer.tick(time.delta());
+
         if (mouse_input.pressed(MouseButton::Left) || keyboard_input.pressed(KeyCode::Space))
-            && (time.elapsed() - last_fired_projectile.time).as_millis() > PROJECTILES_THROTTLE
+            && last_fired_projectile.timer.finished()
         {
             let player_transform = player_query.single();
 
@@ -33,17 +35,16 @@ impl WeaponPlugin {
                 .spawn(Bullet::from_player_position(player_transform))
                 .insert(Name::new("Bullet"));
 
-            last_fired_projectile.time = time.elapsed();
+            last_fired_projectile.timer.reset();
         }
     }
 }
 
-const PROJECTILES_THROTTLE: u128 = 200;
+const BULLETS_THROTTLE: u64 = 200;
 
 #[derive(Resource, Debug)]
 struct LastFiredProjectile {
-    // TODO: rewrite with Some(Timer)
-    time: Duration,
+    timer: Timer,
 }
 
 const BULLET_SIZE: Vec2 = Vec2::new(2., 15.);
