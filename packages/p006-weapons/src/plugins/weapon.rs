@@ -69,29 +69,29 @@ impl WeaponPlugin {
         keyboard_input: Res<Input<KeyCode>>,
         mut current_weapon: ResMut<CurrentWeapon>,
     ) {
-        let mut new_weapon: Option<Weapon> = None;
+        let new_weapon: Option<Weapon> = match keyboard_input.get_just_pressed().next() {
+            Some(KeyCode::Key1) => Some(Weapon::Pistol(PistolWeapon::new())),
+            Some(KeyCode::Key2) => Some(Weapon::Shotgun(ShotgunWeapon::new())),
+            Some(KeyCode::Key3) => Some(Weapon::Rifle(RifleWeapon::new())),
+            _ => None,
+        };
 
-        if keyboard_input.just_pressed(KeyCode::Key1)
-            && !matches!(current_weapon.weapon, Weapon::Pistol(_))
-        {
-            new_weapon = Some(Weapon::Pistol(PistolWeapon::new()));
-        }
-        if keyboard_input.just_pressed(KeyCode::Key2)
-            && !matches!(current_weapon.weapon, Weapon::Shotgun(_))
-        {
-            new_weapon = Some(Weapon::Shotgun(ShotgunWeapon::new()));
-        }
-        if keyboard_input.just_pressed(KeyCode::Key3)
-            && !matches!(current_weapon.weapon, Weapon::Rifle(_))
-        {
-            new_weapon = Some(Weapon::Rifle(RifleWeapon::new()));
-        }
+        match new_weapon {
+            Some(weapon)
+                if std::mem::discriminant(&current_weapon.weapon)
+                    != std::mem::discriminant(&weapon) =>
+            {
+                current_weapon.weapon = weapon;
 
-        if new_weapon.is_some() {
-            current_weapon.weapon = new_weapon.unwrap();
+                current_weapon.fire_throttle =
+                    Timer::new(Duration::from_millis(SWITCH_WEAPON_DELAY), TimerMode::Once);
+            }
+            Some(_) | None => {}
         }
     }
 }
+
+const SWITCH_WEAPON_DELAY: u64 = 500;
 
 #[derive(Resource)]
 struct CurrentWeapon {
@@ -136,7 +136,7 @@ impl PistolWeapon {
                 color: "ffc48c",
                 speed: 750.,
                 damage: 20.,
-                throttle: 200,
+                throttle: 500,
             },
         }
     }
