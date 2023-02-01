@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy::prelude::*;
 
@@ -132,7 +132,7 @@ impl PistolWeapon {
         PistolWeapon {
             name: "Pistol",
             bullet: WeaponBullet {
-                size: Vec2::new(2., 15.),
+                size: Vec2::new(3., 15.),
                 color: "ffc48c",
                 speed: 750.,
                 damage: 20.,
@@ -178,14 +178,17 @@ struct ShotgunWeapon {
     bullet: WeaponBullet,
 }
 
+const SHOTGUN_DISPERSION_ANGLE: f32 = PI / 24.;
+const SHOTGUN_SHOTS_COUNT: u32 = 8;
+
 impl ShotgunWeapon {
     fn new() -> Self {
         ShotgunWeapon {
             name: "Shotgun",
             bullet: WeaponBullet {
-                size: Vec2::new(6., 10.),
+                size: Vec2::new(1., 10.),
                 color: "ffffd1",
-                speed: 500.,
+                speed: 700.,
                 damage: 10.,
                 throttle: 1000,
             },
@@ -193,33 +196,42 @@ impl ShotgunWeapon {
     }
 
     fn fire(&self, mut commands: Commands, player_transform: &Transform) {
-        let position_correction = player_transform.rotation.mul_vec3(Vec3::Y * 20.);
-        let transform = Transform {
-            translation: player_transform.translation.clone() + position_correction,
-            scale: self.bullet.size.extend(1.0),
-            rotation: player_transform.rotation.clone(),
-            ..default()
-        };
+        let mut rotation = player_transform
+            .rotation
+            .mul_quat(Quat::from_axis_angle(Vec3::Z, -SHOTGUN_DISPERSION_ANGLE));
+        let angle_correction = SHOTGUN_DISPERSION_ANGLE * 2. / SHOTGUN_SHOTS_COUNT as f32;
 
-        commands
-            .spawn(FiredBullet {
-                sprite: SpriteBundle {
-                    transform,
-                    sprite: Sprite {
-                        color: Color::hex(self.bullet.color).expect("wrong bullet color"),
-                        custom_size: Some(Vec2::new(1.0, 1.0)),
+        for _ in 0..SHOTGUN_SHOTS_COUNT {
+            let position_correction = rotation.mul_vec3(Vec3::Y * 20.);
+            let transform = Transform {
+                translation: player_transform.translation.clone() + position_correction,
+                scale: self.bullet.size.extend(1.0),
+                rotation,
+                ..default()
+            };
+
+            commands
+                .spawn(FiredBullet {
+                    sprite: SpriteBundle {
+                        transform,
+                        sprite: Sprite {
+                            color: Color::hex(self.bullet.color).expect("wrong bullet color"),
+                            custom_size: Some(Vec2::new(1.0, 1.0)),
+                            ..default()
+                        },
                         ..default()
                     },
-                    ..default()
-                },
-                projectile: Projectile {
-                    speed: self.bullet.speed,
-                    traveled: 0.,
-                    size: self.bullet.size,
-                    damage: self.bullet.damage,
-                },
-            })
-            .insert(Name::new(self.name));
+                    projectile: Projectile {
+                        speed: self.bullet.speed,
+                        traveled: 0.,
+                        size: self.bullet.size,
+                        damage: self.bullet.damage,
+                    },
+                })
+                .insert(Name::new(self.name));
+
+            rotation = rotation.mul_quat(Quat::from_axis_angle(Vec3::Z, angle_correction));
+        }
     }
 }
 
