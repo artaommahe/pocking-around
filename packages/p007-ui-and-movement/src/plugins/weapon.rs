@@ -19,7 +19,7 @@ impl Plugin for WeaponPlugin {
 
 impl WeaponPlugin {
     fn fire(
-        commands: Commands,
+        mut commands: Commands,
         mouse_input: Res<Input<MouseButton>>,
         keyboard_input: Res<Input<KeyCode>>,
         player_query: Query<&Transform, With<Player>>,
@@ -36,7 +36,7 @@ impl WeaponPlugin {
 
             match &current_weapon.weapon {
                 Weapon::Pistol(weapon) => {
-                    weapon.fire(commands, player_transform);
+                    weapon.fire(&mut commands, player_transform);
 
                     let throttle_duration = weapon.bullet.throttle;
                     current_weapon
@@ -44,7 +44,7 @@ impl WeaponPlugin {
                         .set_duration(Duration::from_millis(throttle_duration));
                 }
                 Weapon::Shotgun(weapon) => {
-                    weapon.fire(commands, player_transform);
+                    weapon.fire(&mut commands, player_transform);
 
                     let throttle_duration = weapon.bullet.throttle;
                     current_weapon
@@ -52,7 +52,7 @@ impl WeaponPlugin {
                         .set_duration(Duration::from_millis(throttle_duration));
                 }
                 Weapon::Rifle(weapon) => {
-                    weapon.fire(commands, player_transform);
+                    weapon.fire(&mut commands, player_transform);
 
                     let throttle_duration = weapon.bullet.throttle;
                     current_weapon
@@ -143,7 +143,7 @@ impl PistolWeapon {
         }
     }
 
-    fn fire(&self, mut commands: Commands, player_transform: &Transform) {
+    fn fire(&self, commands: &mut Commands, player_transform: &Transform) {
         let position_correction = player_transform.rotation.mul_vec3(Vec3::Y * 20.);
         let transform = Transform {
             translation: player_transform.translation.clone() + position_correction,
@@ -199,7 +199,7 @@ impl ShotgunWeapon {
         }
     }
 
-    fn fire(&self, mut commands: Commands, player_transform: &Transform) {
+    fn fire(&self, commands: &mut Commands, player_transform: &Transform) {
         let mut rotation = player_transform
             .rotation
             .mul_quat(Quat::from_axis_angle(Vec3::Z, -SHOTGUN_DISPERSION_ANGLE));
@@ -261,7 +261,7 @@ impl RifleWeapon {
         }
     }
 
-    fn fire(&self, mut commands: Commands, player_transform: &Transform) {
+    fn fire(&self, commands: &mut Commands, player_transform: &Transform) {
         let position_correction = player_transform.rotation.mul_vec3(Vec3::Y * 20.);
         let transform = Transform {
             translation: player_transform.translation.clone() + position_correction,

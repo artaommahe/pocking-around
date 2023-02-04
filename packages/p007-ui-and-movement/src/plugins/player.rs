@@ -143,7 +143,7 @@ impl PlayerPlugin {
         camera_query: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
         mut player_query: Query<&mut Transform, With<Player>>,
     ) {
-        let cursor_position = get_cursor_word_position(windows, camera_query);
+        let cursor_position = get_cursor_word_position(&windows, &camera_query);
 
         if cursor_position.is_none() {
             return;
@@ -160,8 +160,8 @@ impl PlayerPlugin {
 }
 
 fn get_cursor_word_position(
-    windows: Res<Windows>,
-    camera_query: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+    windows: &Res<Windows>,
+    camera_query: &Query<(&Camera, &GlobalTransform), With<MainCamera>>,
 ) -> Option<Vec2> {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
