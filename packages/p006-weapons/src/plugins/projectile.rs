@@ -23,8 +23,6 @@ impl Plugin for ProjectilePlugin {
     }
 }
 
-const MAX_TRAVEL_DISTANCE: f32 = 450.;
-
 impl ProjectilePlugin {
     fn projectile_movement(
         mut projectiles: Query<(&mut Transform, &mut Projectile)>,
@@ -107,7 +105,7 @@ impl ProjectilePlugin {
         mut collided_projectiles: ResMut<CollidedProjectiles>,
     ) {
         for (entity, projectile) in projectiles.iter() {
-            if projectile.traveled > MAX_TRAVEL_DISTANCE {
+            if projectile.traveled > projectile.max_travel_distance {
                 commands.entity(entity).despawn();
             }
         }
@@ -130,6 +128,7 @@ pub struct Projectile {
     pub traveled: f32,
     pub size: Vec2,
     pub damage: f32,
+    pub max_travel_distance: f32,
 }
 
 #[derive(Debug, Clone)]

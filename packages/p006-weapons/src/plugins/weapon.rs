@@ -119,6 +119,7 @@ struct WeaponBullet {
     speed: f32,
     damage: f32,
     throttle: u64,
+    max_travel_distance: f32,
 }
 
 #[derive(Debug)]
@@ -137,6 +138,7 @@ impl PistolWeapon {
                 speed: 750.,
                 damage: 20.,
                 throttle: 500,
+                max_travel_distance: 250.,
             },
         }
     }
@@ -166,6 +168,7 @@ impl PistolWeapon {
                     traveled: 0.,
                     size: self.bullet.size,
                     damage: self.bullet.damage,
+                    max_travel_distance: self.bullet.max_travel_distance,
                 },
             })
             .insert(Name::new(self.name.to_owned() + &" bullet"));
@@ -191,6 +194,7 @@ impl ShotgunWeapon {
                 speed: 700.,
                 damage: 10.,
                 throttle: 1000,
+                max_travel_distance: 150.,
             },
         }
     }
@@ -226,6 +230,7 @@ impl ShotgunWeapon {
                         traveled: 0.,
                         size: self.bullet.size,
                         damage: self.bullet.damage,
+                        max_travel_distance: self.bullet.max_travel_distance,
                     },
                 })
                 .insert(Name::new(self.name));
@@ -251,6 +256,7 @@ impl RifleWeapon {
                 speed: 1000.,
                 damage: 30.,
                 throttle: 100,
+                max_travel_distance: 400.,
             },
         }
     }
@@ -280,6 +286,7 @@ impl RifleWeapon {
                     traveled: 0.,
                     size: self.bullet.size,
                     damage: self.bullet.damage,
+                    max_travel_distance: self.bullet.max_travel_distance,
                 },
             })
             .insert(Name::new(self.name));
