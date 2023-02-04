@@ -18,10 +18,14 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(PlayerPlugin::setup)
-            .add_system(PlayerPlugin::move_player)
-            .add_system(PlayerPlugin::follow_camera.after(PlayerPlugin::move_player))
-            .add_system(PlayerPlugin::track_mouse_position);
+        app.insert_resource(Cursor {
+            angle: Quat::from_axis_angle(Vec3::Z, 0.),
+        })
+        .add_startup_system(PlayerPlugin::setup)
+        .add_system(PlayerPlugin::track_cursor_position)
+        .add_system(PlayerPlugin::rotate_player.after(PlayerPlugin::track_cursor_position))
+        .add_system(PlayerPlugin::move_player.after(PlayerPlugin::rotate_player))
+        .add_system(PlayerPlugin::follow_camera.after(PlayerPlugin::move_player));
     }
 }
 
@@ -83,41 +87,36 @@ impl PlayerPlugin {
         }
 
         let mut player_transform = player.single_mut();
-        let mut new_player_x = player_transform.translation.x;
-        let mut new_player_y = player_transform.translation.y;
 
-        if keyboard_input.pressed(KeyCode::W) {
-            new_player_y += PLAYER_SPEED * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::S) {
-            new_player_y -= PLAYER_SPEED * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::A) {
-            new_player_x -= PLAYER_SPEED * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::D) {
-            new_player_x += PLAYER_SPEED * time.delta_seconds();
-        }
-
-        let target = ColliderTarget {
-            position: Vec3::new(new_player_x, new_player_y, 0.),
-            size: Vec2::splat(PLAYER_SIZE * 2.),
+        let x_direction: f32 = if keyboard_input.pressed(KeyCode::D) {
+            1.
+        } else if keyboard_input.pressed(KeyCode::A) {
+            -1.
+        } else {
+            0.
         };
-        let mut collision: Option<Collision> = None;
 
-        for (obstacle_transform, obstacle_collider) in obstacles.into_iter() {
-            let obstacle_collision = collide(
-                target.position,
-                target.size,
-                obstacle_transform.translation,
-                obstacle_collider.size,
-            );
+        let y_direction: f32 = if keyboard_input.pressed(KeyCode::W) {
+            1.
+        } else if keyboard_input.pressed(KeyCode::S) {
+            -1.
+        } else {
+            0.
+        };
 
-            if obstacle_collision.is_some() {
-                collision = obstacle_collision;
-                break;
-            }
-        }
+        let movement_angle = y_direction.atan2(x_direction) - MOUSE_DIRECTION_NORMALIZATION;
+        let movement_rotation = Quat::from_axis_angle(Vec3::Z, movement_angle);
+        let angle_diff = player_transform.rotation.angle_between(movement_rotation);
+
+        let slowdown_factor = 1. - (angle_diff / PI) * 0.8;
+        let movement_speed = PLAYER_SPEED * slowdown_factor;
+
+        let new_player_x =
+            player_transform.translation.x + x_direction * movement_speed * time.delta_seconds();
+        let new_player_y =
+            player_transform.translation.y + y_direction * movement_speed * time.delta_seconds();
+
+        let collision = check_collision(new_player_x, new_player_y, &obstacles);
 
         if ![Some(Collision::Left), Some(Collision::Right)].contains(&collision) {
             player_transform.translation.x = new_player_x;
@@ -138,10 +137,11 @@ impl PlayerPlugin {
         camera_transform.translation.y = player_transform.translation.y;
     }
 
-    fn track_mouse_position(
+    fn track_cursor_position(
         windows: Res<Windows>,
         camera_query: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-        mut player_query: Query<&mut Transform, With<Player>>,
+        player_query: Query<&Transform, With<Player>>,
+        mut cursor: ResMut<Cursor>,
     ) {
         let cursor_position = get_cursor_word_position(&windows, &camera_query);
 
@@ -149,14 +149,25 @@ impl PlayerPlugin {
             return;
         }
 
-        let mut player_transform = player_query.single_mut();
+        let player_transform = player_query.single();
 
         let player_position = player_transform.translation.truncate();
         let diff = cursor_position.unwrap() - player_position;
         let angle = diff.y.atan2(diff.x) - MOUSE_DIRECTION_NORMALIZATION;
 
-        player_transform.rotation = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);
+        cursor.angle = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);
     }
+
+    fn rotate_player(mut player_query: Query<&mut Transform, With<Player>>, cursor: Res<Cursor>) {
+        let mut player_transform = player_query.single_mut();
+
+        player_transform.rotation = cursor.angle;
+    }
+}
+
+#[derive(Resource)]
+struct Cursor {
+    angle: Quat,
 }
 
 fn get_cursor_word_position(
@@ -188,6 +199,32 @@ fn get_cursor_word_position(
         let world_pos: Vec2 = world_pos.truncate();
 
         return Some(world_pos);
+    }
+
+    None
+}
+
+fn check_collision(
+    new_player_x: f32,
+    new_player_y: f32,
+    obstacles: &Query<(&Transform, &Collider), Without<Player>>,
+) -> Option<Collision> {
+    let target = ColliderTarget {
+        position: Vec3::new(new_player_x, new_player_y, 0.),
+        size: Vec2::splat(PLAYER_SIZE * 2.),
+    };
+
+    for (obstacle_transform, obstacle_collider) in obstacles.into_iter() {
+        let obstacle_collision = collide(
+            target.position,
+            target.size,
+            obstacle_transform.translation,
+            obstacle_collider.size,
+        );
+
+        if obstacle_collision.is_some() {
+            return obstacle_collision;
+        }
     }
 
     None
