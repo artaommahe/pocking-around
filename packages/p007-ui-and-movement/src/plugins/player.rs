@@ -104,12 +104,18 @@ impl PlayerPlugin {
             0.
         };
 
+        let slow_move_factor = if keyboard_input.any_pressed([KeyCode::LShift, KeyCode::RShift]) {
+            0.5
+        } else {
+            1.
+        };
+
         let movement_angle = y_direction.atan2(x_direction) - MOUSE_DIRECTION_NORMALIZATION;
         let movement_rotation = Quat::from_axis_angle(Vec3::Z, movement_angle);
         let angle_diff = player_transform.rotation.angle_between(movement_rotation);
+        let rotation_slowdown_factor = 1. - (angle_diff / PI) * 0.8;
 
-        let slowdown_factor = 1. - (angle_diff / PI) * 0.8;
-        let movement_speed = PLAYER_SPEED * slowdown_factor;
+        let movement_speed = PLAYER_SPEED * rotation_slowdown_factor * slow_move_factor;
 
         let new_player_x =
             player_transform.translation.x + x_direction * movement_speed * time.delta_seconds();
