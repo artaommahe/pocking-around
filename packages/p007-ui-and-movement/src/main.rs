@@ -10,6 +10,6 @@ fn main() {
         .add_plugin(plugins::wall::WallPlugin)
         .add_plugin(plugins::random_obstacles::RandomObstaclesPlugin)
         .add_plugin(plugins::projectile::ProjectilePlugin)
-        .add_plugin(plugins::weapon::WeaponPlugin)
+        .add_plugin(plugins::weapon::weapon::WeaponPlugin)
         .run();
 }
