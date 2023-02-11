@@ -61,12 +61,14 @@ impl PistolPlugin {
 pub struct PistolWeapon {
     pub id: &'static str,
     pub label: &'static str,
+    pub short_label: &'static str,
     pub bullet: WeaponBullet,
 }
 
 pub const PISTOL_WEAPON: PistolWeapon = PistolWeapon {
     id: "pistol",
     label: "Pistol",
+    short_label: "Ps",
     bullet: WeaponBullet {
         size: Vec2::new(3., 15.),
         color: "ffc48c",

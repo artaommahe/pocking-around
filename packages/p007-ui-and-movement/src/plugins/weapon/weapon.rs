@@ -37,31 +37,25 @@ impl Plugin for WeaponPlugin {
 
 impl WeaponPlugin {
     fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-        /*commands
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::FlexEnd,
-                padding: UiRect {
-                    bottom: Val::Px(10.),
+        commands
+            .spawn(NodeBundle {
+                style: Style {
+                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::FlexEnd,
+                    padding: UiRect {
+                        bottom: Val::Px(10.),
+                        ..default()
+                    },
                     ..default()
                 },
                 ..default()
-            },
-            ..default()
-        })
-        .with_children(|parent| {
-            spawn_weapon_button(
-                parent,
-                &asset_server,
-                "ffc48c",
-                "Ps",
-                std::mem::discriminant(&Weapon::Pistol),
-            );
-            spawn_weapon_button(parent, &asset_server, "ffffd1", "Sh");
-            spawn_weapon_button(parent, &asset_server, "aff8db", "Rf");
-        });*/
+            })
+            .with_children(|parent| {
+                spawn_weapon_button(parent, &asset_server, "ffc48c", PISTOL_WEAPON.short_label);
+                spawn_weapon_button(parent, &asset_server, "ffffd1", SHOTGUN_WEAPON.short_label);
+                spawn_weapon_button(parent, &asset_server, "aff8db", RIFLE_WEAPON.short_label);
+            });
     }
 
     fn fire(
@@ -130,12 +124,11 @@ struct CurrentWeapon {
 #[derive(Component)]
 struct WeaponButton {}
 
-/* fn spawn_weapon_button(
+fn spawn_weapon_button(
     parent: &mut ChildBuilder,
     asset_server: &Res<AssetServer>,
     color_hex: &str,
     text: &str,
-    weapon: Weapon,
 ) {
     parent
         .spawn(ButtonBundle {
@@ -162,4 +155,4 @@ struct WeaponButton {}
                 },
             ));
         });
-}*/
+}

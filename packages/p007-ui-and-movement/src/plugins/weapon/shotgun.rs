@@ -74,12 +74,14 @@ const SHOTGUN_SHOTS_COUNT: u32 = 8;
 pub struct ShotgunWeapon {
     pub id: &'static str,
     pub label: &'static str,
+    pub short_label: &'static str,
     pub bullet: WeaponBullet,
 }
 
 pub const SHOTGUN_WEAPON: ShotgunWeapon = ShotgunWeapon {
     id: "shotgun",
     label: "Shotgun",
+    short_label: "Sh",
     bullet: WeaponBullet {
         size: Vec2::new(1., 10.),
         color: "ffffd1",
