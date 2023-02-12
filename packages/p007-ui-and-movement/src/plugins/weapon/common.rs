@@ -18,8 +18,20 @@ pub struct FiredBullet {
     pub projectile: Projectile,
 }
 
+#[derive(Resource)]
+pub struct CurrentWeaponThrottle {
+    pub switch: Timer,
+    pub fire: Timer,
+}
+
 pub struct FireEvent {
     pub weapon_id: &'static str,
     pub player_translation: Vec3,
     pub player_rotation: Quat,
+}
+
+#[derive(Debug)]
+pub struct WeaponUi {
+    pub label: &'static str,
+    pub color: &'static str,
 }

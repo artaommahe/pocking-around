@@ -1,8 +1,10 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::plugins::projectile::Projectile;
 
-use super::common::{FireEvent, FiredBullet, WeaponBullet};
+use super::common::{CurrentWeaponThrottle, FireEvent, FiredBullet, WeaponBullet, WeaponUi};
 
 pub struct PistolPlugin;
 
@@ -13,7 +15,11 @@ impl Plugin for PistolPlugin {
 }
 
 impl PistolPlugin {
-    fn fire(mut commands: Commands, mut fire_event: EventReader<FireEvent>) {
+    fn fire(
+        mut commands: Commands,
+        mut fire_event: EventReader<FireEvent>,
+        mut current_weapon_throttle: ResMut<CurrentWeaponThrottle>,
+    ) {
         for FireEvent {
             weapon_id,
             player_translation,
@@ -23,6 +29,11 @@ impl PistolPlugin {
             if *weapon_id != PISTOL_WEAPON.id {
                 continue;
             }
+
+            current_weapon_throttle
+                .fire
+                .set_duration(Duration::from_secs_f32(PISTOL_WEAPON.bullet.throttle));
+            current_weapon_throttle.fire.reset();
 
             let position_correction = player_rotation.mul_vec3(Vec3::Y * 20.);
             let transform = Transform {
@@ -60,15 +71,14 @@ impl PistolPlugin {
 #[derive(Debug)]
 pub struct PistolWeapon {
     pub id: &'static str,
-    pub label: &'static str,
-    pub short_label: &'static str,
-    pub bullet: WeaponBullet,
+    label: &'static str,
+    bullet: WeaponBullet,
+    pub ui: WeaponUi,
 }
 
 pub const PISTOL_WEAPON: PistolWeapon = PistolWeapon {
     id: "pistol",
     label: "Pistol",
-    short_label: "Ps",
     bullet: WeaponBullet {
         size: Vec2::new(3., 15.),
         color: "ffc48c",
@@ -76,5 +86,9 @@ pub const PISTOL_WEAPON: PistolWeapon = PistolWeapon {
         damage: 20.,
         throttle: 0.5,
         max_travel_distance: 250.,
+    },
+    ui: WeaponUi {
+        label: "Ps",
+        color: "ffc48c",
     },
 };

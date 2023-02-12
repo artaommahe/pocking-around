@@ -1,10 +1,10 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy::prelude::*;
 
 use crate::plugins::projectile::Projectile;
 
-use super::common::{FireEvent, FiredBullet, WeaponBullet};
+use super::common::{CurrentWeaponThrottle, FireEvent, FiredBullet, WeaponBullet, WeaponUi};
 
 pub struct ShotgunPlugin;
 
@@ -15,7 +15,11 @@ impl Plugin for ShotgunPlugin {
 }
 
 impl ShotgunPlugin {
-    fn fire(mut commands: Commands, mut fire_event: EventReader<FireEvent>) {
+    fn fire(
+        mut commands: Commands,
+        mut fire_event: EventReader<FireEvent>,
+        mut current_weapon_throttle: ResMut<CurrentWeaponThrottle>,
+    ) {
         for FireEvent {
             weapon_id,
             player_translation,
@@ -25,6 +29,11 @@ impl ShotgunPlugin {
             if *weapon_id != SHOTGUN_WEAPON.id {
                 continue;
             }
+
+            current_weapon_throttle
+                .fire
+                .set_duration(Duration::from_secs_f32(SHOTGUN_WEAPON.bullet.throttle));
+            current_weapon_throttle.fire.reset();
 
             let mut rotation =
                 player_rotation.mul_quat(Quat::from_axis_angle(Vec3::Z, -SHOTGUN_DISPERSION_ANGLE));
@@ -73,15 +82,14 @@ const SHOTGUN_SHOTS_COUNT: u32 = 8;
 #[derive(Debug)]
 pub struct ShotgunWeapon {
     pub id: &'static str,
-    pub label: &'static str,
-    pub short_label: &'static str,
-    pub bullet: WeaponBullet,
+    label: &'static str,
+    bullet: WeaponBullet,
+    pub ui: WeaponUi,
 }
 
 pub const SHOTGUN_WEAPON: ShotgunWeapon = ShotgunWeapon {
     id: "shotgun",
     label: "Shotgun",
-    short_label: "Sh",
     bullet: WeaponBullet {
         size: Vec2::new(1., 10.),
         color: "ffffd1",
@@ -89,5 +97,9 @@ pub const SHOTGUN_WEAPON: ShotgunWeapon = ShotgunWeapon {
         damage: 10.,
         throttle: 1.,
         max_travel_distance: 150.,
+    },
+    ui: WeaponUi {
+        label: "Sh",
+        color: "ffffd1",
     },
 };
